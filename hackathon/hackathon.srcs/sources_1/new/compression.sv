@@ -74,6 +74,10 @@ module compression (
                 largeDeltaold[i] <= 0;
             end
             
+            foreach (largeDeltanew[i]) begin
+                largeDeltanew[i] <= 0;
+            end
+            
             onebyteoutFLAG <= 0;
             largebyteoutFLAG <= 0;
             signal <= 0;
@@ -115,7 +119,13 @@ module compression (
                             RLE_count[signal] <= 0;
                         end
                         
-                        signal <= signal + 1; //move to next signal
+                        if (signal == SIGNAL_NUMBER-1) begin //if done with signals, go back to IDLE
+                                    state <= IDLE;
+                                    signal <= 0;
+                                end
+                                else begin
+                                    signal <= signal + 1; //move to next signal
+                                end
                     end
                     
                     else begin //if different
@@ -128,6 +138,8 @@ module compression (
                         end
                         
                         else begin
+                            //not super happy about this being blocking, but may be simplest approach.  check if timing violations
+                            largeDeltaold[signal] = largeDeltanew[signal]; //update largeDeltaold
                             largeDeltanew[signal] = storagenew[signal] - storageold[signal];  //find delta
                             
                             if (largeDeltanew[signal] == largeDeltaold[signal]) begin //Delta RLE Mode
@@ -155,7 +167,7 @@ module compression (
                             end
                             
                             else if ((largeDeltanew[signal] < RAWTHRESHOLD) && (largeDeltanew[signal] > -RAWTHRESHOLD)) begin // if small delta: DELTA mode!
-                                bytesout[7:0] <= {DELTA, signal, largeDeltanew[signal][DATA_WIDTH], largeDeltanew[signal][2:0]};  //grab sign bit and last 3 bits of delta
+                                bytesout[7:0] <= {DELTA, signal, largeDeltanew[signal][DATA_WIDTH-1], largeDeltanew[signal][2:0]};  //grab sign bit and last 3 bits of delta
                                 onebyteoutFLAG <= 1;
                                 if (signal == SIGNAL_NUMBER-1) begin //if done with signals, go back to IDLE
                                     state <= IDLE;
