@@ -34,7 +34,7 @@ module compression (
     
     localparam STARTER = 0; //starter compare value for delta
     localparam RLEWIDTH = 4;  //width of RLE tracker
-    localparam RAWTHRESHOLD = 3; //how big does delta have to be to go to raw? both pos and neg
+    localparam RAWTHRESHOLD = 7; //how big does delta have to be to go to raw? both pos and neg
     
     //packet codes
     localparam RLE = 2'b00; //Normal run length encoding 1 byte = {2'bPacket Code, 2'bSignal #, 4'bRLE_count}
@@ -128,7 +128,7 @@ module compression (
                         end
                         
                         else begin
-                            largeDeltanew[signal] <= storagenew[signal] - storageold[signal];  //find delta
+                            largeDeltanew[signal] = storagenew[signal] - storageold[signal];  //find delta
                             
                             if (largeDeltanew[signal] == largeDeltaold[signal]) begin //Delta RLE Mode
                                 deltaRLE_count[signal] <= deltaRLE_count[signal] + 1; //increment counter by 1
@@ -154,8 +154,8 @@ module compression (
                                 //failed, re run through process with same signal
                             end
                             
-                            else if ((largeDelta < RAWTHRESHOLD) && (largeDelta > -RAWTHRESHOLD)) begin // if small delta: DELTA mode!
-                                bytesout[7:0] <= {DELTA, signal, largeDelta[DATA_WIDTH], largeDelta[2:0]};  //grab sign bit and last 3 bits of delta
+                            else if ((largeDeltanew[signal] < RAWTHRESHOLD) && (largeDeltanew[signal] > -RAWTHRESHOLD)) begin // if small delta: DELTA mode!
+                                bytesout[7:0] <= {DELTA, signal, largeDeltanew[signal][DATA_WIDTH], largeDeltanew[signal][2:0]};  //grab sign bit and last 3 bits of delta
                                 onebyteoutFLAG <= 1;
                                 if (signal == SIGNAL_NUMBER-1) begin //if done with signals, go back to IDLE
                                     state <= IDLE;
