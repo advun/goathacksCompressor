@@ -40,7 +40,7 @@ module compression (
     localparam RLE = 2'b00; //Normal run length encoding 1 byte = {2'bPacket Code, 2'bSignal #, 4'bRLE_count}
     localparam DELTARLE = 2'b01; //run length encoding of deltas 1 byte = {2'bPacket Code, 2'bSignal #, 4'bRLE_count}
     localparam DELTA = 2'b10; //small delta change.  1 byte = {2'bPacket Code, 2'bSignal #, 4'bDelta}
-    localparam RAW = 2'b11; //Raw data bytes: DATA_WIDTH/8 + 1 bytes {2'bPacket Code, 2'bSignal #, 4'b0000} {8'bData} {8'bData} etc
+    localparam RAW = 2'b11; //Raw data bytes: DATA_WIDTH/8 + 4 bits {2'bPacket Code, 2'bSignal #} {DATA}
     
     reg [$clog2(SIGNAL_NUMBER)-1:0] signal; //which signal is being looked at
     
@@ -166,7 +166,7 @@ module compression (
                                 //failed, re run through process with same signal
                             end
                             
-                            else if ((largeDeltanew[signal] < RAWTHRESHOLD) && (largeDeltanew[signal] > -RAWTHRESHOLD)) begin // if small delta: DELTA mode!
+                            else if ((largeDeltanew[signal] < RAWTHRESHOLD) && (largeDeltanew[signal] > -RAWTHRESHOLD-1)) begin // if small delta: DELTA mode! -1 as signed goes -N+1 to N
                                 bytesout[7:0] <= {DELTA, signal, largeDeltanew[signal][DATA_WIDTH-1], largeDeltanew[signal][2:0]};  //grab sign bit and last 3 bits of delta
                                 onebyteoutFLAG <= 1;
                                 if (signal == SIGNAL_NUMBER-1) begin //if done with signals, go back to IDLE
