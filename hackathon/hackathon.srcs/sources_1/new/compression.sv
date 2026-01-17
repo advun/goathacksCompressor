@@ -19,15 +19,14 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-module compression ( //starting value
+module compression (
     input [DATA_WIDTH-1:0] in [SIGNAL_NUMBER-1:0],
     input start,
     input clk,
     input reset_n,
-    output reg [7:0] onebyteout,
-    output reg onebyteoutFLAG,
-    output reg [DATA_WIDTH+8-1:0] largebyteout,
-    output reg largebyteoutFLAG
+    output reg onebyteoutFLAG, //flag for memory to say how many bytes are being output
+    output reg [DATA_WIDTH+4-1:0] bytesout, //data output to memory
+    output reg largebyteoutFLAG //flag for memory to say how many bytes are being output 
     );
     
     import parameters::DATA_WIDTH;
@@ -55,44 +54,64 @@ module compression ( //starting value
     reg signed [DATA_WIDTH-1:0] largeDeltaold [SIGNAL_NUMBER-1:0]; //last delta.  just change out for third storage??
     reg signed [DATA_WIDTH-1:0] largeDeltanew [SIGNAL_NUMBER-1:0]; //current delta
     
-    //transmission buffer
-    reg [DATA_WIDTH+8-1:0] packetbuffer; //regs for packet info to be transfered. 1 byte sent per cycle, leading info byte + data bytes
-    
     always @ (posedge clk) begin
         if (!reset_n) begin
-        state <= IDLE;
-        foreach (storageold[i]) begin //initialize starting value at 0
-            storageold[i] <= STARTER;
-        end
-        //storage news to 0
+            
+            foreach (storagenew[i]) begin //initialize starting value at 0
+                storagenew[i] <= STARTER;
+            end
+            
+            //reset run length counts
+            foreach (RLE_count[i]) begin 
+                RLE_count[i] <= 0;
+            end
+            
+            foreach (deltaRLE_count[i]) begin
+                deltaRLE_count[i] <= 0;
+            end
+            
+            foreach (largeDeltaold[i]) begin
+                largeDeltaold[i] <= 0;
+            end
+            
+            onebyteoutFLAG <= 0;
+            largebyteoutFLAG <= 0;
+            signal <= 0;
+            state <= IDLE;
         end
         
         else begin
+            //clear flags every cycle
+            onebyteoutFLAG <= 0;
+            largebyteoutFLAG <= 0;
+            
             case (state) 
             
                 IDLE: begin
             
                     if (start) begin
-                        foreach (in[i]) begin //read in values
+                        foreach (storagenew[i]) begin //move new values to old values
+                            storageold[i] <= storagenew[i];
+                        end
+                        
+                        foreach (in[i]) begin //read in new values
                             storagenew[i] <= in[i];
                         end
+                        
+                        signal <= 0;
                         state <= CHECK_SIGNAL;
-                    
                     end
             
                 end
                 
                 CHECK_SIGNAL: begin
-                
-                    //this is going to cause issues with assignments!!!! (i think)
-                    //storagenew[signal] <= in; //bring in new value
-                    //storageold[signal] <= storagenew[signal]; //shift old value
                     
                     if (storagenew[signal] == storageold[signal]) begin //check if same
                         RLE_count[signal] <= RLE_count[signal] + 1; //RLE mode!
                         
                         if (RLE_count[signal] >= ((1 << RLEWIDTH) - 1)) begin //hit max value (avoid overflow)
-                            packetbuffer[7:0] <= {RLE, signal, RLE_count[signal]};
+                            bytesout[7:0] <= {RLE, signal, RLE_count[signal]};
+                            onebyteoutFLAG <= 1;
                             RLE_count[signal] <= 0;
                         end
                         
@@ -102,7 +121,8 @@ module compression ( //starting value
                     else begin //if different
                         //RLE fail
                         if (RLE_count[signal] > 0) begin //if there is an RLE run, end it
-                            packetbuffer[7:0] <= {RLE, signal, RLE_count[signal]};
+                            bytesout[7:0] <= {RLE, signal, RLE_count[signal]};
+                            onebyteoutFLAG <= 1;
                             RLE_count[signal] <= 0;
                             //failed, re run through process with same signal
                         end
@@ -114,47 +134,61 @@ module compression ( //starting value
                                 deltaRLE_count[signal] <= deltaRLE_count[signal] + 1; //increment counter by 1
                         
                                 if (deltaRLE_count[signal] >= ((1 << RLEWIDTH) - 1)) begin //hit max value (avoid overflow)
-                                    packetbuffer[7:0] <= {DELTARLE, signal, deltaRLE_count[signal]};
+                                    bytesout[7:0] <= {DELTARLE, signal, deltaRLE_count[signal]};
+                                    onebyteoutFLAG <= 1;
                                     deltaRLE_count[signal] <= 0;
                                 end
-                        
-                                signal <= signal + 1; //move to next signal
+                                if (signal == SIGNAL_NUMBER-1) begin //if done with signals, go back to IDLE
+                                    state <= IDLE;
+                                    signal <= 0;
+                                end
+                                else begin
+                                    signal <= signal + 1; //move to next signal
+                                end
                             end
                             
-                            else if (deltaRLE_count[signal] > 0) begin //if there is a  deltaRLE run, end it
-                                packetbuffer[7:0] <= {DELTARLE, signal, deltaRLE_count[signal]};
+                            else if (deltaRLE_count[signal] > 0) begin //if there is a deltaRLE run, end it
+                                bytesout[7:0] <= {DELTARLE, signal, deltaRLE_count[signal]};
+                                onebyteoutFLAG <= 1;
                                 deltaRLE_count[signal] <= 0;
                                 //failed, re run through process with same signal
                             end
                             
                             else if ((largeDelta < RAWTHRESHOLD) && (largeDelta > -RAWTHRESHOLD)) begin // if small delta: DELTA mode!
-                                packetbuffer[7:0] <= {DELTA, signal, largeDelta[DATA_WIDTH], largeDelta[2:0]};  //grab sign bit and last 3 bits of delta
-                                signal <= signal + 1; //move to next signal
+                                bytesout[7:0] <= {DELTA, signal, largeDelta[DATA_WIDTH], largeDelta[2:0]};  //grab sign bit and last 3 bits of delta
+                                onebyteoutFLAG <= 1;
+                                if (signal == SIGNAL_NUMBER-1) begin //if done with signals, go back to IDLE
+                                    state <= IDLE;
+                                    signal <= 0;
+                                end
+                                else begin
+                                    signal <= signal + 1; //move to next signal
+                                end
                             end
                             
                             else begin //large delta: RAW mode!
-                            packetbuffer[7:0] <= 
-                            
-                            end
+                                bytesout[DATA_WIDTH+4-1:0] <= {RAW, signal, storagenew[signal]}; 
+                                largebyteoutFLAG <= 1;
+                                if (signal == SIGNAL_NUMBER-1) begin //if done with signals, go back to IDLE
+                                        state <= IDLE;
+                                        signal <= 0;
+                                    end
+                                    else begin
+                                        signal <= signal + 1; //move to next signal
+                                    end
+                            end   
                         end
                     end
                 end
                 
-                TODO: begin
+                //Extra Case: begin
             
             
             
-                end
-            
+                //end         
             endcase
             
         end
-    
-    end
-    
-    
-    
-    always @ (posedge clk) begin
     
     end
     
