@@ -61,32 +61,3 @@ module bramstorage(
     
     
 endmodule
-
-logic [31:0] bit_buf;
-reg  [5:0]  bit_count; // up to 32 bits
-
-always_ff @(posedge clk or negedge reset_n) begin
-    if (!reset_n) begin
-        bit_buf   <= 0;
-        bit_count <= 0;
-        mem_counter <= 0;
-    end else begin
-        // Append new bits to buffer
-        if (onebyteoutFLAG) begin
-            bit_buf   <= bit_buf | (bytesout[7:0] << bit_count);
-            bit_count <= bit_count + 8;
-        end
-        else if (largebyteoutFLAG) begin
-            bit_buf   <= bit_buf | (bytesout[19:0] << bit_count); // 2.5 bytes
-            bit_count <= bit_count + 20;
-        end
-
-        // While there are full bytes, write to memory
-        while (bit_count >= 8) begin
-            compressedstorage[mem_counter] <= bit_buf[7:0];
-            mem_counter <= mem_counter + 1;
-            bit_buf <= bit_buf >> 8;
-            bit_count <= bit_count - 8;
-        end
-    end
-end
