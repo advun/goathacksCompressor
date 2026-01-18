@@ -1,7 +1,7 @@
 Copyright 1986-2021 Xilinx, Inc. All Rights Reserved.
 -------------------------------------------------------------------------------------------------
 | Tool Version              : Vivado v.2021.1 (win64) Build 3247384 Thu Jun 10 19:36:33 MDT 2021
-| Date                      : Sat Jan 17 22:30:38 2026
+| Date                      : Sun Jan 18 09:02:17 2026
 | Host                      : AK227-12 running 64-bit major release  (build 9200)
 | Command                   : report_io -file compressor_top_io_placed.rpt
 | Design                    : compressor_top
