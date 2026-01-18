@@ -92,6 +92,8 @@ module compression (
             largebyteoutFLAG <= 0;
             uncompressedFLAG <= 0; 
             
+            if (compressedready) begin //only go if bramstorage can take a value
+            
             case (state) 
             
                 IDLE: begin
@@ -107,7 +109,9 @@ module compression (
                         
                         signal <= 0;
                         state <= CHECK_SIGNAL;
-                        uncompressedFLAG <= 1;
+                        if (!uncompressedfull) begin //if uncompressed is full, don't send values.  for testing
+                            uncompressedFLAG <= 1;
+                        end
                     end
             
                 end
@@ -197,13 +201,13 @@ module compression (
                     end
                 end
                 
-                //Extra Case: begin
+                        //Extra Case: begin
             
             
             
-                //end         
-            endcase
-            
+                        //end         
+                endcase
+            end
         end
     
     end
