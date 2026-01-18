@@ -1,7 +1,7 @@
 Copyright 1986-2021 Xilinx, Inc. All Rights Reserved.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version     : Vivado v.2021.1 (win64) Build 3247384 Thu Jun 10 19:36:33 MDT 2021
-| Date             : Sat Jan 17 22:32:00 2026
+| Date             : Sun Jan 18 09:04:04 2026
 | Host             : AK227-12 running 64-bit major release  (build 9200)
 | Command          : report_power -file compressor_top_power_routed.rpt -pb compressor_top_power_summary_routed.pb -rpx compressor_top_power_routed.rpx
 | Design           : compressor_top
@@ -30,10 +30,10 @@ Table of Contents
 ----------
 
 +--------------------------+--------------+
-| Total On-Chip Power (W)  | 0.134        |
+| Total On-Chip Power (W)  | 0.136        |
 | Design Power Budget (W)  | Unspecified* |
 | Power Budget Margin (W)  | NA           |
-| Dynamic (W)              | 0.062        |
+| Dynamic (W)              | 0.064        |
 | Device Static (W)        | 0.072        |
 | Effective TJA (C/W)      | 5.0          |
 | Max Ambient (C)          | 84.3         |
@@ -52,17 +52,17 @@ Table of Contents
 +----------------+-----------+----------+-----------+-----------------+
 | On-Chip        | Power (W) | Used     | Available | Utilization (%) |
 +----------------+-----------+----------+-----------+-----------------+
-| Clocks         |     0.024 |        3 |       --- |             --- |
-| Slice Logic    |     0.011 |    28343 |       --- |             --- |
-|   LUT as Logic |     0.011 |     6878 |     20800 |           33.07 |
-|   CARRY4       |    <0.001 |       45 |      8150 |            0.55 |
-|   Register     |    <0.001 |    17309 |     41600 |           41.61 |
+| Clocks         |     0.025 |        3 |       --- |             --- |
+| Slice Logic    |     0.011 |    28264 |       --- |             --- |
+|   LUT as Logic |     0.011 |     6876 |     20800 |           33.06 |
+|   CARRY4       |    <0.001 |       39 |      8150 |            0.48 |
+|   Register     |    <0.001 |    17239 |     41600 |           41.44 |
 |   F7/F8 Muxes  |    <0.001 |     3272 |     32600 |           10.04 |
 |   Others       |     0.000 |       10 |       --- |             --- |
-| Signals        |     0.019 |    21146 |       --- |             --- |
+| Signals        |     0.019 |    21066 |       --- |             --- |
 | I/O            |     0.009 |       20 |       106 |           18.87 |
 | Static Power   |     0.072 |          |           |                 |
-| Total          |     0.134 |          |           |                 |
+| Total          |     0.136 |          |           |                 |
 +----------------+-----------+----------+-----------+-----------------+
 
 
@@ -72,9 +72,9 @@ Table of Contents
 +-----------+-------------+-----------+-------------+------------+-------------+-------------+------------+
 | Source    | Voltage (V) | Total (A) | Dynamic (A) | Static (A) | Powerup (A) | Budget (A)  | Margin (A) |
 +-----------+-------------+-----------+-------------+------------+-------------+-------------+------------+
-| Vccint    |       1.000 |     0.063 |       0.053 |      0.010 |       NA    | Unspecified | NA         |
+| Vccint    |       1.000 |     0.065 |       0.055 |      0.010 |       NA    | Unspecified | NA         |
 | Vccaux    |       1.800 |     0.013 |       0.000 |      0.013 |       NA    | Unspecified | NA         |
-| Vcco33    |       3.300 |     0.003 |       0.002 |      0.001 |       NA    | Unspecified | NA         |
+| Vcco33    |       3.300 |     0.004 |       0.003 |      0.001 |       NA    | Unspecified | NA         |
 | Vcco25    |       2.500 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
 | Vcco18    |       1.800 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
 | Vcco15    |       1.500 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
@@ -141,10 +141,10 @@ Table of Contents
 +----------------+-----------+
 | Name           | Power (W) |
 +----------------+-----------+
-| compressor_top |     0.062 |
+| compressor_top |     0.064 |
 |   comp         |     0.001 |
 |   readout      |     0.004 |
-|   storage      |     0.047 |
+|   storage      |     0.049 |
 +----------------+-----------+
 
 

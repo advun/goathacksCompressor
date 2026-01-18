@@ -1,7 +1,7 @@
 Copyright 1986-2021 Xilinx, Inc. All Rights Reserved.
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2021.1 (win64) Build 3247384 Thu Jun 10 19:36:33 MDT 2021
-| Date         : Sat Jan 17 22:31:56 2026
+| Date         : Sun Jan 18 09:03:59 2026
 | Host         : AK227-12 running 64-bit major release  (build 9200)
 | Command      : report_methodology -file compressor_top_methodology_drc_routed.rpt -pb compressor_top_methodology_drc_routed.pb -rpx compressor_top_methodology_drc_routed.rpx
 | Design       : compressor_top
@@ -130,7 +130,7 @@ Related violations: <none>
 
 ULMTCS-2#1 Warning
 Control Sets use limits require reduction  
-This design uses 2077 control sets (vs. available limit of 8150, determined by 1 control set per CLB). This exceeds the control set use guideline of 15 percent. This is at a level where reduction is REQUIRED (see UG949). Use report_control_sets to get more details.
+This design uses 2075 control sets (vs. available limit of 8150, determined by 1 control set per CLB). This exceeds the control set use guideline of 15 percent. This is at a level where reduction is REQUIRED (see UG949). Use report_control_sets to get more details.
 Related violations: <none>
 
 
