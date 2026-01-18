@@ -8,7 +8,7 @@ Why is this useful?
 
 Traces generate truly tremendous amounts of data.  Just one 16 bit bus at 100Mhz is 16*100M = 1.6 billion bits per second = 200MB per second. That's just one bus!  
 There is no transmission protocal fast enough for a full system, and FPGA BRAM is usuualy sub 1 GB.  So, working around our limitations, if we locally compress the data, we can fit signifigantly more 
-in the same limited BRAM, for later reading.  Luckily, FPGA data is fairly predictable, and thus easily compressed.  I used 4 different data compression modes:
+in the same limited BRAM, for later reading.  Luckily, FPGA data is fairly predictable, and thus easily compressed.  Currently, it appears to be compressing about 7.4x (though this could be improved by increasing the RLE lengths allowed).  It uses about 0.89% of the LUTs and 0.59% of the flipflops on the Basys3.  I used 4 different data compression modes:
 
 Compression Strategies:
 
