@@ -59,15 +59,12 @@ module bramstorage(
     
     logic compressedfull; //high if compressed storage is full
     
-    // Memory full when no more room to write
-    assign compressedfull = (compmem_counter >= MEMSIZE);
+    // Full flags - conservative thresholds
+    assign compressedfull = (compmem_counter >= MEMSIZE-3); 
     assign uncompressedfull = (uncompmem_counter >= SAMPLE_MEMSIZE-1);
     
     //backpressure for compressor (prevent operation if storage can't take more values logic 
-    // Account for potential drain this cycle when determining readiness
-    logic [5:0] count_after_drain;
-    assign count_after_drain = (bit_count >= 8) ? (bit_count - 6'd8) : bit_count;
-    assign compressedready = !compressedfull && (count_after_drain <= 6'd32);  //possible improvement: differentiate between large and small.  this currently blocks a 8 bit read if there were 28bits in buff.
+    assign compressedready = (bit_count <= 20) && !compressedfull;  //possible improvement: differentiate between large and small.  this currently blocks a 8 bit read if there were 28bits in buff.
     
     // Compressed data storage - can accept input AND drain buffer in same cycle
     always_ff @(posedge clk or negedge reset_n) begin
@@ -82,7 +79,7 @@ module bramstorage(
             logic will_add_1byte;
             logic will_add_2p5byte;
             
-            will_drain       = (bit_count >= 8) && (compmem_counter < MEMSIZE);
+            will_drain       = (bit_count >= 8) && !compressedfull;
             will_add_1byte   = onebyteoutFLAG  && (bit_count <= 40-8);
             will_add_2p5byte = largebyteoutFLAG && !will_add_1byte && (bit_count <= 40-20);
             

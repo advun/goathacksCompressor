@@ -24,6 +24,8 @@ module compression (
     input start,
     input clk,
     input reset_n,
+    input compressedready,
+    input uncompressedfull,
     output reg onebyteoutFLAG, //flag for memory to say how many bytes are being output
     output reg [DATA_WIDTH+4-1:0] bytesout, //data output to memory
     output reg largebyteoutFLAG, //flag for memory to say how many bytes are being output
