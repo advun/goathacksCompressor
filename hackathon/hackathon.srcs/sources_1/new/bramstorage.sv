@@ -21,15 +21,15 @@
 
 
 module bramstorage(
-    input onebyteoutFLAG,
+    input onebyteoutFLAG,//flag for 1 byte read in
     input [DATA_WIDTH+4-1:0] compressedin,
-    input largebyteoutFLAG,
+    input largebyteoutFLAG, //flag for 20 bits read in
     input clk,
     input reset_n,
     input uncompressedflag,
     input [DATA_WIDTH*SIGNAL_NUMBER-1:0] uncompressedin,
-    output logic compressedfull,
-    output logic uncompressedfull
+    output logic compressedready, //low if storage can't take value at moment (compressed storage is full or buffer full)
+    output logic uncompressedfull //high if uncompressed storage is full
 );
     
     import parameters::DATA_WIDTH;
@@ -57,9 +57,14 @@ module bramstorage(
     logic [39:0] bit_buf;
     reg [5:0] bit_count;
     
+    logic compressedfull; //high if compressed storage is full
+    
     // Full flags - conservative thresholds
-    assign compressedfull = (compmem_counter >= MEMSIZE-3);
+    assign compressedfull = (compmem_counter >= MEMSIZE-3); 
     assign uncompressedfull = (uncompmem_counter >= SAMPLE_MEMSIZE-1);
+    
+    //backpressure for compressor (prevent operation if storage can't take more values logic 
+    assign compressedready = (bit_count <= 20) && !compressedfull;  //possible improvement: differentiate between large and small.  this currently blocks a 8 bit read if there were 28bits in buff.
     
     // Compressed data storage - can accept input AND drain buffer in same cycle
     always_ff @(posedge clk or negedge reset_n) begin
@@ -70,13 +75,20 @@ module bramstorage(
         end 
         else begin
             // Determine operations (all use CURRENT values for decisions)
-            logic will_drain = (bit_count >= 8) && (compmem_counter < MEMSIZE);
-            logic will_add_1byte = onebyteoutFLAG && (compmem_counter < MEMSIZE-1);
-            logic will_add_2p5byte = largebyteoutFLAG && (compmem_counter < MEMSIZE-3) && !will_add_1byte;
+            logic will_drain;
+            logic will_add_1byte;
+            logic will_add_2p5byte;
+            
+            will_drain       = (bit_count >= 8) && !compressedfull;
+            will_add_1byte   = onebyteoutFLAG  && (bit_count <= 40-8);
+            will_add_2p5byte = largebyteoutFLAG && !will_add_1byte && (bit_count <= 40-20);
             
             // Calculate shifts for drain operation
-            logic [39:0] shifted_buf = will_drain ? (bit_buf >> 8) : bit_buf;
-            logic [5:0] reduced_count = will_drain ? (bit_count - 6'd8) : bit_count;
+            logic [39:0] shifted_buf;
+            logic [5:0]  reduced_count;
+            
+            shifted_buf   = will_drain ? (bit_buf >> 8) : bit_buf;
+            reduced_count = will_drain ? (bit_count - 6'd8) : bit_count;
             
             // Perform drain (write to memory)
             if (will_drain) begin
