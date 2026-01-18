@@ -26,7 +26,9 @@ module compression (
     input reset_n,
     output reg onebyteoutFLAG, //flag for memory to say how many bytes are being output
     output reg [DATA_WIDTH+4-1:0] bytesout, //data output to memory
-    output reg largebyteoutFLAG //flag for memory to say how many bytes are being output 
+    output reg largebyteoutFLAG, //flag for memory to say how many bytes are being output
+    output reg uncompressedFLAG, //flag for uncompressed values for memory (TESTING)
+    output [DATA_WIDTH*SIGNAL_NUMBER-1:0] uncompressed //uncompressed values for memory
     );
     
     import parameters::DATA_WIDTH;
@@ -85,9 +87,10 @@ module compression (
         end
         
         else begin
-            //clear flags every cycle
+            //clear flags every cycle //issues with setting twice in same cycle?? look into
             onebyteoutFLAG <= 0;
             largebyteoutFLAG <= 0;
+            uncompressedFLAG <= 0; 
             
             case (state) 
             
@@ -104,6 +107,7 @@ module compression (
                         
                         signal <= 0;
                         state <= CHECK_SIGNAL;
+                        uncompressedFLAG <= 1;
                     end
             
                 end
@@ -202,6 +206,10 @@ module compression (
             
         end
     
+    end
+    
+    always_comb begin
+     uncompressed = {storagenew}; //send out uncompressed values for memory compairision with compressed values
     end
     
 endmodule
