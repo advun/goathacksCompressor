@@ -16,6 +16,7 @@
 // Revision:
 // Revision 0.01 - File Created
 // Additional Comments:
+// FIXED: Signal advancement logic - only increment when done processing signal
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -127,15 +128,18 @@ module compression (
                             bytesout[7:0] <= {RLE, signal, RLE_count[signal]};
                             onebyteoutFLAG <= 1;
                             RLE_count[signal] <= 0;
+                            // Don't increment signal - stay on same signal to continue RLE next cycle
                         end
-                        
-                        if (signal == SIGNAL_NUMBER-1) begin //if done with signals, go back to IDLE
-                                    state <= IDLE;
-                                    signal <= 0;
-                                end
-                                else begin
-                                    signal <= signal + 1; //move to next signal
-                                end
+                        else begin
+                            // No packet emitted, just accumulating run - move to next signal
+                            if (signal == SIGNAL_NUMBER-1) begin //if done with signals, go back to IDLE
+                                state <= IDLE;
+                                signal <= 0;
+                            end
+                            else begin
+                                signal <= signal + 1; //move to next signal
+                            end
+                        end
                     end
                     
                     else begin //if different
@@ -144,7 +148,7 @@ module compression (
                             bytesout[7:0] <= {RLE, signal, RLE_count[signal]};
                             onebyteoutFLAG <= 1;
                             RLE_count[signal] <= 0;
-                            //failed, re run through process with same signal
+                            //failed, re run through process with same signal (don't increment)
                         end
                         
                         else begin
@@ -159,13 +163,17 @@ module compression (
                                     bytesout[7:0] <= {DELTARLE, signal, deltaRLE_count[signal]};
                                     onebyteoutFLAG <= 1;
                                     deltaRLE_count[signal] <= 0;
-                                end
-                                if (signal == SIGNAL_NUMBER-1) begin //if done with signals, go back to IDLE
-                                    state <= IDLE;
-                                    signal <= 0;
+                                    // Don't increment signal - stay to continue DeltaRLE next cycle
                                 end
                                 else begin
-                                    signal <= signal + 1; //move to next signal
+                                    // No packet emitted, accumulating delta run - move to next signal
+                                    if (signal == SIGNAL_NUMBER-1) begin //if done with signals, go back to IDLE
+                                        state <= IDLE;
+                                        signal <= 0;
+                                    end
+                                    else begin
+                                        signal <= signal + 1; //move to next signal
+                                    end
                                 end
                             end
                             
@@ -173,12 +181,14 @@ module compression (
                                 bytesout[7:0] <= {DELTARLE, signal, deltaRLE_count[signal]};
                                 onebyteoutFLAG <= 1;
                                 deltaRLE_count[signal] <= 0;
-                                //failed, re run through process with same signal
+                                //failed, re run through process with same signal (don't increment)
                             end
                             
                             else if ((largeDeltanew[signal] < RAWTHRESHOLD) && (largeDeltanew[signal] > -RAWTHRESHOLD-1)) begin // if small delta: DELTA mode! -1 as signed goes -N+1 to N
                                 bytesout[7:0] <= {DELTA, signal, largeDeltanew[signal][DATA_WIDTH-1], largeDeltanew[signal][2:0]};  //grab sign bit and last 3 bits of delta
                                 onebyteoutFLAG <= 1;
+                                
+                                // Emitted final packet for this signal - move to next
                                 if (signal == SIGNAL_NUMBER-1) begin //if done with signals, go back to IDLE
                                     state <= IDLE;
                                     signal <= 0;
@@ -191,13 +201,15 @@ module compression (
                             else begin //large delta: RAW mode!
                                 bytesout[DATA_WIDTH+4-1:0] <= {RAW, signal, storagenew[signal]}; 
                                 largebyteoutFLAG <= 1;
+                                
+                                // Emitted final packet for this signal - move to next
                                 if (signal == SIGNAL_NUMBER-1) begin //if done with signals, go back to IDLE
-                                        state <= IDLE;
-                                        signal <= 0;
-                                    end
-                                    else begin
-                                        signal <= signal + 1; //move to next signal
-                                    end
+                                    state <= IDLE;
+                                    signal <= 0;
+                                end
+                                else begin
+                                    signal <= signal + 1; //move to next signal
+                                end
                             end   
                         end
                     end
