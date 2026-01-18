@@ -42,8 +42,8 @@ module bramstorage(
     reg [$clog2(MEMSIZE)-1:0] compmem_counter; //where in compressed memory we are
     reg [$clog2(MEMSIZE)-1:0] uncompmem_counter; //where in uncompressed memory we are
     
-    logic [31:0] bit_buf;
-    reg  [5:0]  bit_count; // up to 32 bits
+    logic [39:0] bit_buf;
+    reg  [5:0]  bit_count; // up to 63 bits
     
     assign compressedfull = (compmem_counter == MEMSIZE-1);
     assign uncompressedfull = (uncompmem_counter == MEMSIZE-1);
@@ -66,7 +66,7 @@ module bramstorage(
             end
     
             // While there are full bytes, write to memory
-            while (bit_count >= 8) begin
+            else if (bit_count >= 8) begin
                 compressedstorage[compmem_counter] <= bit_buf[7:0];
                 compmem_counter <= compmem_counter + 1;
                 bit_buf <= bit_buf >> 8;
