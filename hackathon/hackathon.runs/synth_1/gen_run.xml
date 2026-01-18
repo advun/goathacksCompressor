@@ -1,17 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<GenRun Id="synth_1" LaunchPart="xc7a35tcpg236-1" LaunchTime="1768688700">
-  <File Type="PA-TCL" Name="compression.tcl"/>
-  <File Type="RDS-PROPCONSTRS" Name="compression_drc_synth.rpt"/>
-  <File Type="REPORTS-TCL" Name="compression_reports.tcl"/>
-  <File Type="RDS-RDS" Name="compression.vds"/>
-  <File Type="RDS-UTIL" Name="compression_utilization_synth.rpt"/>
-  <File Type="RDS-UTIL-PB" Name="compression_utilization_synth.pb"/>
-  <File Type="RDS-DCP" Name="compression.dcp"/>
-  <File Type="VDS-TIMINGSUMMARY" Name="compression_timing_summary_synth.rpt"/>
-  <File Type="VDS-TIMING-PB" Name="compression_timing_summary_synth.pb"/>
+<GenRun Id="synth_1" LaunchPart="xc7a35tcpg236-1" LaunchTime="1768706811">
+  <File Type="PA-TCL" Name="compressor_top.tcl"/>
+  <File Type="RDS-PROPCONSTRS" Name="compressor_top_drc_synth.rpt"/>
+  <File Type="REPORTS-TCL" Name="compressor_top_reports.tcl"/>
+  <File Type="RDS-RDS" Name="compressor_top.vds"/>
+  <File Type="RDS-UTIL" Name="compressor_top_utilization_synth.rpt"/>
+  <File Type="RDS-UTIL-PB" Name="compressor_top_utilization_synth.pb"/>
+  <File Type="RDS-DCP" Name="compressor_top.dcp"/>
+  <File Type="VDS-TIMINGSUMMARY" Name="compressor_top_timing_summary_synth.rpt"/>
+  <File Type="VDS-TIMING-PB" Name="compressor_top_timing_summary_synth.pb"/>
   <FileSet Name="sources" Type="DesignSrcs" RelSrcDir="$PSRCDIR/sources_1" RelGenDir="$PGENDIR/sources_1">
     <Filter Type="Srcs"/>
+    <File Path="$PSRCDIR/sources_1/new/bram_readout.sv">
+      <FileInfo>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
     <File Path="$PSRCDIR/sources_1/new/parameters.sv">
+      <FileInfo>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PSRCDIR/sources_1/new/bramstorage.sv">
       <FileInfo>
         <Attr Name="UsedIn" Val="synthesis"/>
         <Attr Name="UsedIn" Val="implementation"/>
@@ -25,14 +39,33 @@
         <Attr Name="UsedIn" Val="simulation"/>
       </FileInfo>
     </File>
+    <File Path="$PSRCDIR/sources_1/new/uart_tx.sv">
+      <FileInfo>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
+    <File Path="$PSRCDIR/sources_1/new/compressor_top.sv">
+      <FileInfo>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+        <Attr Name="UsedIn" Val="simulation"/>
+      </FileInfo>
+    </File>
     <Config>
       <Option Name="DesignMode" Val="RTL"/>
-      <Option Name="TopModule" Val="compression"/>
-      <Option Name="TopAutoSet" Val="TRUE"/>
+      <Option Name="TopModule" Val="compressor_top"/>
     </Config>
   </FileSet>
   <FileSet Name="constrs_in" Type="Constrs" RelSrcDir="$PSRCDIR/constrs_1">
     <Filter Type="Constrs"/>
+    <File Path="$PSRCDIR/constrs_1/new/constraints.xdc">
+      <FileInfo>
+        <Attr Name="UsedIn" Val="synthesis"/>
+        <Attr Name="UsedIn" Val="implementation"/>
+      </FileInfo>
+    </File>
     <Config>
       <Option Name="ConstrsType" Val="XDC"/>
     </Config>

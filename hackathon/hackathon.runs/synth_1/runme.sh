@@ -40,4 +40,4 @@ EAStep()
      fi
 }
 
-EAStep vivado -log compression.vds -m64 -product Vivado -mode batch -messageDb vivado.pb -notrace -source compression.tcl
+EAStep vivado -log compressor_top.vds -m64 -product Vivado -mode batch -messageDb vivado.pb -notrace -source compressor_top.tcl
