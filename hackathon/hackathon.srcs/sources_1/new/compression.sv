@@ -38,7 +38,7 @@ module compression (
     
     localparam STARTER = 0; //starter compare value for delta
     localparam RLEWIDTH = 4;  //width of RLE tracker
-    localparam RAWTHRESHOLD = 7; //how big does delta have to be to go to raw? both pos and neg
+    localparam RAWTHRESHOLD = 8; //how big does delta have to be to go to raw? both pos and neg
     
     //packet codes
     localparam RLE = 2'b00; //Normal run length encoding 1 byte = {2'bPacket Code, 2'bSignal #, 4'bRLE_count}
@@ -214,8 +214,8 @@ module compression (
     
     end
     
-    always_comb begin
-     uncompressed = {storagenew}; //send out uncompressed values for memory compairision with compressed values
-    end
-    
+
+    assign uncompressed = {storagenew[3], storagenew[2], storagenew[1], storagenew[0]}; //send out uncompressed values for memory compairision with compressed values
+
+        
 endmodule

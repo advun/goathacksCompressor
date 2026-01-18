@@ -16,6 +16,7 @@
 // Revision:
 // Revision 0.01 - File Created
 // Additional Comments:
+// FIXED: Added BRAM inference attributes and registered read port
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -29,7 +30,12 @@ module bramstorage(
     input uncompressedflag,
     input [DATA_WIDTH*SIGNAL_NUMBER-1:0] uncompressedin,
     output logic compressedready, //low if storage can't take value at moment (compressed storage is full or buffer full)
-    output logic uncompressedfull //high if uncompressed storage is full
+    output logic uncompressedfull, //high if uncompressed storage is full
+    output logic [$clog2(MEMSIZE)-1:0] compmem_counter, //bytes stored in compressed BRAM
+    
+    // Read port for UART readout
+    input wire [$clog2(MEMSIZE)-1:0] rd_addr,
+    output logic [7:0] rd_data
 );
     
     import parameters::DATA_WIDTH;
@@ -38,20 +44,19 @@ module bramstorage(
     localparam BYTES_PER_SAMPLE = (DATA_WIDTH*SIGNAL_NUMBER)/8;  // = 8
     localparam SAMPLE_MEMSIZE = MEMSIZE/BYTES_PER_SAMPLE;        // = 256 samples
     
-    // Compressed storage (single BRAM)
-    logic [7:0] compressedstorage [0:MEMSIZE-1];
+    // Compressed storage (single BRAM) - FORCE Block RAM inference
+    (* ram_style = "block" *) logic [7:0] compressedstorage [0:MEMSIZE-1];
     
-    // Uncompressed storage (8 separate BRAMs, one per byte position)
-    logic [7:0] uncomp_mem0 [0:SAMPLE_MEMSIZE-1];
-    logic [7:0] uncomp_mem1 [0:SAMPLE_MEMSIZE-1];
-    logic [7:0] uncomp_mem2 [0:SAMPLE_MEMSIZE-1];
-    logic [7:0] uncomp_mem3 [0:SAMPLE_MEMSIZE-1];
-    logic [7:0] uncomp_mem4 [0:SAMPLE_MEMSIZE-1];
-    logic [7:0] uncomp_mem5 [0:SAMPLE_MEMSIZE-1];
-    logic [7:0] uncomp_mem6 [0:SAMPLE_MEMSIZE-1];
-    logic [7:0] uncomp_mem7 [0:SAMPLE_MEMSIZE-1];
+    // Uncompressed storage (8 separate BRAMs, one per byte position) - FORCE Block RAM inference
+    (* ram_style = "block" *) logic [7:0] uncomp_mem0 [0:SAMPLE_MEMSIZE-1];
+    (* ram_style = "block" *) logic [7:0] uncomp_mem1 [0:SAMPLE_MEMSIZE-1];
+    (* ram_style = "block" *) logic [7:0] uncomp_mem2 [0:SAMPLE_MEMSIZE-1];
+    (* ram_style = "block" *) logic [7:0] uncomp_mem3 [0:SAMPLE_MEMSIZE-1];
+    (* ram_style = "block" *) logic [7:0] uncomp_mem4 [0:SAMPLE_MEMSIZE-1];
+    (* ram_style = "block" *) logic [7:0] uncomp_mem5 [0:SAMPLE_MEMSIZE-1];
+    (* ram_style = "block" *) logic [7:0] uncomp_mem6 [0:SAMPLE_MEMSIZE-1];
+    (* ram_style = "block" *) logic [7:0] uncomp_mem7 [0:SAMPLE_MEMSIZE-1];
     
-    reg [$clog2(MEMSIZE)-1:0] compmem_counter;
     reg [$clog2(SAMPLE_MEMSIZE)-1:0] uncompmem_counter;
     
     logic [39:0] bit_buf;
@@ -66,6 +71,22 @@ module bramstorage(
     //backpressure for compressor (prevent operation if storage can't take more values logic 
     assign compressedready = (bit_count <= 20) && !compressedfull;  //possible improvement: differentiate between large and small.  this currently blocks a 8 bit read if there were 28bits in buff.
     
+    
+    // Determine operations (all use CURRENT values for decisions)
+    logic will_drain;
+    logic will_add_1byte;
+    logic will_add_2p5byte;
+    
+    // Calculate shifts for drain operation
+    logic [39:0] shifted_buf;
+    logic [5:0]  reduced_count;
+            
+            
+    // Read port - REGISTERED for proper BRAM inference (1 cycle latency)
+    always_ff @(posedge clk) begin
+        rd_data <= compressedstorage[rd_addr];
+    end
+    
     // Compressed data storage - can accept input AND drain buffer in same cycle
     always_ff @(posedge clk or negedge reset_n) begin
         if (!reset_n) begin
@@ -74,18 +95,11 @@ module bramstorage(
             compmem_counter <= 0;
         end 
         else begin
-            // Determine operations (all use CURRENT values for decisions)
-            logic will_drain;
-            logic will_add_1byte;
-            logic will_add_2p5byte;
             
             will_drain       = (bit_count >= 8) && !compressedfull;
             will_add_1byte   = onebyteoutFLAG  && (bit_count <= 40-8);
             will_add_2p5byte = largebyteoutFLAG && !will_add_1byte && (bit_count <= 40-20);
             
-            // Calculate shifts for drain operation
-            logic [39:0] shifted_buf;
-            logic [5:0]  reduced_count;
             
             shifted_buf   = will_drain ? (bit_buf >> 8) : bit_buf;
             reduced_count = will_drain ? (bit_count - 6'd8) : bit_count;

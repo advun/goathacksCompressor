@@ -2,11 +2,11 @@
 # Vivado v2021.1 (64-bit)
 # SW Build 3247384 on Thu Jun 10 19:36:33 MDT 2021
 # IP Build 3246043 on Fri Jun 11 00:30:35 MDT 2021
-# Start of session at: Sat Jan 17 17:25:04 2026
-# Process ID: 22228
+# Start of session at: Sat Jan 17 22:26:54 2026
+# Process ID: 2512
 # Current directory: C:/Users/cwilding/Downloads/hackathon/hackathon.runs/synth_1
-# Command line: vivado.exe -log compression.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source compression.tcl
-# Log file: C:/Users/cwilding/Downloads/hackathon/hackathon.runs/synth_1/compression.vds
+# Command line: vivado.exe -log compressor_top.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source compressor_top.tcl
+# Log file: C:/Users/cwilding/Downloads/hackathon/hackathon.runs/synth_1/compressor_top.vds
 # Journal file: C:/Users/cwilding/Downloads/hackathon/hackathon.runs/synth_1\vivado.jou
 #-----------------------------------------------------------
-source compression.tcl -notrace
+source compressor_top.tcl -notrace
