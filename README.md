@@ -1,3 +1,5 @@
+TO RUN: Download decompress.py, connect FPGA by USB, and run python3 decompress.py --port /dev/tty.usbserial..... --baud 115200 --debug, putting in the USB it is connected to
+
 Only Sort of Working at Moment
 
 What is this?
