@@ -22,42 +22,73 @@
 
 module bramstorage(
     input onebyteoutFLAG, //flag for memory to say how many bytes are being output
-    input [DATA_WIDTH+4-1:0] bytesout, //data output to memory
+    input [DATA_WIDTH+4-1:0] compressedin, //data output to memory
     input largebyteoutFLAG, //flag for memory to say how many bytes are being output
     input clk,
-    input reset_n
+    input reset_n,
+    input uncompressedflag,
+    input [DATA_WIDTH*SIGNAL_NUMBER-1:0] uncompressedin,
+    output logic compressedfull, //high if compressed storage is full
+    output logic uncompressedfull //high if uncompressed storage is full
     );
     
     import parameters::DATA_WIDTH;
     import parameters::SIGNAL_NUMBER;
+    localparam MEMSIZE = 2048; //bytes in each memory
     
-    logic [7:0] compressedstorage [0:2047];
-    logic [7:0] uncompressedstorage [0:2047];
+    logic [7:0] compressedstorage [0:MEMSIZE-1];
+    logic [7:0] uncompressedstorage [0:MEMSIZE-1];
     
-    reg [10:0] mem_counter; //11 bits to keep track of where in memory we are
+    reg [$clog2(MEMSIZE)-1:0] compmem_counter; //where in compressed memory we are
+    reg [$clog2(MEMSIZE)-1:0] uncompmem_counter; //where in uncompressed memory we are
     
-    always @ (posedge clk) begin //storage
-        if (reset_n) begin
-            
-        
-        end
-        
+    logic [31:0] bit_buf;
+    reg  [5:0]  bit_count; // up to 32 bits
+    
+    assign compressedfull = (compmem_counter == MEMSIZE-1);
+    assign uncompressedfull = (uncompmem_counter == MEMSIZE-1);
+    
+    always_ff @(posedge clk or negedge reset_n) begin
+        if (!reset_n) begin
+            bit_buf   <= 0;
+            bit_count <= 0;
+            compmem_counter <= 0;
+        end 
         else begin
+            // Append new bits to buffer
             if (onebyteoutFLAG) begin
-                compressedstorage[mem_counter] = bytesout[7:0];
-                mem_counter = mem_counter + 1; //blocking on purpose (unfortunatly)
+                bit_buf   <= bit_buf | (compressedin[7:0] << bit_count);
+                bit_count <= bit_count + 8;
             end
-            
-            else if (largebyteoutFLAG) begin
-                compressedstorage[mem_counter] = bytesout[7:0];
-                compressedstorage[mem_counter+1] = bytesout[15:8];
-                compressedstorage[mem_counter+2] = bytesout[7:0];
-                mem_counter = mem_counter + 3; //blocking on purpose (unfortunatly)
+            else if (largebyteoutFLAG && !compressedfull) begin
+                bit_buf   <= bit_buf | (compressedin[19:0] << bit_count); // 2.5 bytes
+                bit_count <= bit_count + 20;
             end
-        
-        end
     
+            // While there are full bytes, write to memory
+            while (bit_count >= 8) begin
+                compressedstorage[compmem_counter] <= bit_buf[7:0];
+                compmem_counter <= compmem_counter + 1;
+                bit_buf <= bit_buf >> 8;
+                bit_count <= bit_count - 8;
+            end
+        end
     end
+    
+    always_ff @ (posedge clk or negedge reset_n) begin //stores values to uncompressed memory
+        if (!reset_n) begin
+            uncompmem_counter <= 0;
+        end
+        else begin
+            if (uncompressedflag && !uncompressedfull) begin
+                for (int i = 0; i < ((DATA_WIDTH*SIGNAL_NUMBER)/8); i++) begin //0 to DATA_WIDTH*SIGNAL_NUMBER)/8 -1 
+                    uncompressedstorage[uncompmem_counter+i] <= uncompressedin[8*i +: 8];
+                end
+                uncompmem_counter <= uncompmem_counter + ((DATA_WIDTH*SIGNAL_NUMBER)/8);
+            end
+        end
+    end
+
     
     
 endmodule
